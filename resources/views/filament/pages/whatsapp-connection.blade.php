@@ -47,24 +47,6 @@
 
                 <div class="fwn-kv-item">
                     <div class="fwn-kv-label">
-                        {{ __('filament-whatsapp-notification::filament-whatsapp-notification.connection.fields.gateway_public_url') }}
-                    </div>
-                    <div class="fwn-kv-value">
-                        {{ config('filament-whatsapp-notification.gateway.public_url') }}
-                    </div>
-                </div>
-
-                <div class="fwn-kv-item">
-                    <div class="fwn-kv-label">
-                        {{ __('filament-whatsapp-notification::filament-whatsapp-notification.connection.fields.qr_url') }}
-                    </div>
-                    <div class="fwn-kv-value">
-                        {{ app(\Rezadaulay\FilamentWhatsappNotification\Services\WhatsappGatewayClient::class)->qrUrl() }}
-                    </div>
-                </div>
-
-                <div class="fwn-kv-item">
-                    <div class="fwn-kv-label">
                         {{ __('filament-whatsapp-notification::filament-whatsapp-notification.connection.fields.last_checked_at') }}
                     </div>
                     <div class="fwn-kv-value">

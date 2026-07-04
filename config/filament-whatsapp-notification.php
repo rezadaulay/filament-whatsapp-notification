@@ -3,12 +3,7 @@
 return [
     'enabled' => env('WHATSAPP_NOTIFICATION_ENABLED', true),
     'gateway' => [
-        'base_url' => env('WHATSAPP_NOTIFICATION_GATEWAY_URL', 'http://127.0.0.1:5001'),
-        'public_url' => env(
-            'WHATSAPP_NOTIFICATION_PUBLIC_GATEWAY_URL',
-            env('WHATSAPP_NOTIFICATION_GATEWAY_URL', 'http://127.0.0.1:5001')
-        ),
-        'token' => env('WHATSAPP_NOTIFICATION_GATEWAY_TOKEN'),
+        'base_url' => env('WHATSAPP_NOTIFICATION_GATEWAY_URL', 'http://127.0.0.1:5000'),
         'timeout' => (int) env('WHATSAPP_NOTIFICATION_TIMEOUT', 30),
         'country_code' => env('WHATSAPP_NOTIFICATION_COUNTRY_CODE', '62'),
         'check_status_before_send' => env('WHATSAPP_NOTIFICATION_CHECK_STATUS', false),

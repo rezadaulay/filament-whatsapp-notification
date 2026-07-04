@@ -8,7 +8,7 @@ use Rezadaulay\FilamentWhatsappNotification\Models\WhatsappNotificationLog;
 
 it('refreshes the gateway status on mount', function () {
     Http::fake([
-        'http://127.0.0.1:5001/status' => Http::response(['status' => 'connected'], 200),
+        'http://127.0.0.1:5000/status' => Http::response(['status' => 'connected'], 200),
     ]);
 
     Livewire::test(WhatsappConnectionPage::class)

@@ -51,11 +51,6 @@ class WhatsappGatewayClient
         return $this->sendRequest('post', '/logout');
     }
 
-    public function qrUrl(): string
-    {
-        return rtrim((string) config('filament-whatsapp-notification.gateway.public_url', $this->baseUrl()), '/') . '/qr';
-    }
-
     public function qrPage(): WhatsappGatewayResult
     {
         return $this->sendRequest('get', '/qr');
@@ -63,22 +58,14 @@ class WhatsappGatewayClient
 
     protected function request(): PendingRequest
     {
-        $request = $this->http
+        return $this->http
             ->timeout((int) config('filament-whatsapp-notification.gateway.timeout', 30))
             ->acceptJson();
-
-        $token = config('filament-whatsapp-notification.gateway.token');
-
-        if (filled($token)) {
-            $request = $request->withToken($token);
-        }
-
-        return $request;
     }
 
     protected function baseUrl(): string
     {
-        return rtrim((string) config('filament-whatsapp-notification.gateway.base_url', 'http://127.0.0.1:5001'), '/');
+        return rtrim((string) config('filament-whatsapp-notification.gateway.base_url', 'http://127.0.0.1:5000'), '/');
     }
 
     protected function sendRequest(
