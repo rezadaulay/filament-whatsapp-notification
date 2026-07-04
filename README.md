@@ -1,75 +1,332 @@
-# :package_description
+# Filament WhatsApp Notification
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/:vendor_slug/:package_slug/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/:vendor_slug/:package_slug/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3A"Fix+PHP+code+styling"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
+`rezadaulay/filament-whatsapp-notification` is a Filament plugin for Laravel that adds a WhatsApp notification channel backed by an external HTTP gateway. It lets your application queue outgoing WhatsApp messages, inspect delivery attempts, monitor gateway connectivity from Filament, and manually test the connection without building the admin tooling yourself.
 
-<!--delete-->
----
-This repo can be used to scaffold a Filament plugin. Follow these steps to get started:
+This package is designed to work especially well with [rezadaulay/expressjs-baileys](https://github.com/rezadaulay/expressjs-baileys), a Baileys-powered WhatsApp gateway that exposes endpoints such as `/status`, `/qr`, `/send-message`, `/restart-socket`, `/restart`, and `/logout`.
 
-1. Press the "Use this template" button at the top of this repo to create a new repo with the contents of this skeleton.
-2. Run "php ./configure.php" to run a script that will replace all placeholders throughout all the files.
-3. Make something great!
----
-<!--/delete-->
+## Features
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+- Laravel notification channel named `whatsapp`
+- Filament plugin with:
+  - WhatsApp connection page
+  - notification log resource
+  - stats widget
+- Queue-based delivery flow with retry support
+- Delivery log table for auditing and troubleshooting
+- Gateway status checks and QR access from the Filament panel
+- Configurable send delay, queue name, attempts, timeout, and default country code
+
+## How It Works
+
+The package stores outgoing WhatsApp notifications in a database table first. A queued job then processes pending records one by one and sends them to the configured HTTP gateway.
+
+High-level flow:
+
+1. Your Laravel notification returns a `WhatsappMessage`.
+2. The `whatsapp` channel writes a log row into `whatsapp_notification_logs`.
+3. A queued job picks the next pending message.
+4. The job sends the message to the external gateway via HTTP.
+5. The result is stored back in the log table and shown in Filament.
+
+This design gives you traceability, retry behavior, and safer operational handling than sending directly inside the request lifecycle.
+
+## Relationship to `rezadaulay/expressjs-baileys#6`
+
+This package depends on a separate gateway server and is intended to integrate with [rezadaulay/expressjs-baileys](https://github.com/rezadaulay/expressjs-baileys).
+
+The pull request [rezadaulay/expressjs-baileys#6](https://github.com/rezadaulay/expressjs-baileys/pull/6), merged on **July 4, 2026**, translated the remaining Indonesian text in that gateway project into English. That matters here because:
+
+- this Filament plugin is now easier to document fully in English end to end
+- gateway API responses and operational messages are more consistent for English-speaking teams
+- troubleshooting across the Laravel plugin and the gateway is clearer because both sides now use the same language
+
+Functionally, this plugin talks to the gateway through HTTP endpoints. PR `#6` did not change that integration contract; it improved the gateway's English-facing developer and operational text.
+
+## Requirements
+
+- PHP `^8.2`
+- Laravel components `^11.0|^12.0`
+- Filament `^5.0`
+- A running WhatsApp gateway, such as [rezadaulay/expressjs-baileys](https://github.com/rezadaulay/expressjs-baileys)
+- A working Laravel queue worker
 
 ## Installation
 
-You can install the package via composer:
+Install the package:
 
 ```bash
-composer require :vendor_slug/:package_slug
+composer require rezadaulay/filament-whatsapp-notification
 ```
 
-> [!IMPORTANT]
-> If you have not set up a custom theme and are using Filament Panels follow the instructions in the [Filament Docs](https://filamentphp.com/docs/4.x/styling/overview#creating-a-custom-theme) first.
+Publish configuration and migrations:
 
-After setting up a custom theme add the plugin's views to your theme css file or your app's css file if using the standalone packages.
+```bash
+php artisan vendor:publish --tag="filament-whatsapp-notification-config"
+php artisan vendor:publish --tag="filament-whatsapp-notification-migrations"
+php artisan migrate
+```
+
+If you are using Filament Panels with a custom theme, add the package views to your theme or app CSS source list:
 
 ```css
-@source '../../../../vendor/:vendor_slug/:package_slug/resources/**/*.blade.php';
+@source '../../../../vendor/rezadaulay/filament-whatsapp-notification/resources/**/*.blade.php';
 ```
 
-You can publish and run the migrations with:
+Then refresh Filament assets if needed:
 
 ```bash
-php artisan vendor:publish --tag=":package_slug-migrations"
-php artisan migrate
 php artisan filament:assets
 php artisan optimize:clear
 ```
 
-You can publish the config file with:
+## Gateway Setup
 
-```bash
-php artisan vendor:publish --tag=":package_slug-config"
+Point this package to a running HTTP gateway. The default configuration expects:
+
+```text
+http://127.0.0.1:5001
 ```
 
-Optionally, you can publish the views using
+If you are using `rezadaulay/expressjs-baileys`, make sure the gateway is running, paired with WhatsApp, and reachable from your Laravel app.
 
-```bash
-php artisan vendor:publish --tag=":package_slug-views"
+Typical gateway endpoints used by this package:
+
+- `GET /status`
+- `GET /qr`
+- `POST /send-message`
+- `POST /restart-socket`
+- `POST /restart`
+- `POST /logout`
+
+## Filament Registration
+
+Register the plugin in your Filament panel provider:
+
+```php
+use Rezadaulay\FilamentWhatsappNotification\FilamentWhatsappNotificationPlugin;
+
+public function panel(Panel $panel): Panel
+{
+    return $panel
+        ->plugins([
+            FilamentWhatsappNotificationPlugin::make(),
+        ]);
+}
 ```
 
-This is the contents of the published config file:
+You can enable or disable individual pieces:
+
+```php
+FilamentWhatsappNotificationPlugin::make()
+    ->resource()
+    ->statsWidget()
+    ->connectionPage();
+```
+
+Or selectively disable them:
+
+```php
+FilamentWhatsappNotificationPlugin::make()
+    ->resource(false)
+    ->statsWidget(false)
+    ->connectionPage(true);
+```
+
+## Configuration
+
+Published config: `config/filament-whatsapp-notification.php`
 
 ```php
 return [
+    'enabled' => env('WHATSAPP_NOTIFICATION_ENABLED', true),
+    'gateway' => [
+        'base_url' => env('WHATSAPP_NOTIFICATION_GATEWAY_URL', 'http://127.0.0.1:5001'),
+        'public_url' => env('WHATSAPP_NOTIFICATION_PUBLIC_GATEWAY_URL', env('WHATSAPP_NOTIFICATION_GATEWAY_URL', 'http://127.0.0.1:5001')),
+        'token' => env('WHATSAPP_NOTIFICATION_GATEWAY_TOKEN'),
+        'timeout' => (int) env('WHATSAPP_NOTIFICATION_TIMEOUT', 30),
+        'country_code' => env('WHATSAPP_NOTIFICATION_COUNTRY_CODE', '62'),
+        'check_status_before_send' => env('WHATSAPP_NOTIFICATION_CHECK_STATUS', false),
+    ],
+    'queue' => [
+        'connection' => env('WHATSAPP_NOTIFICATION_QUEUE_CONNECTION', env('QUEUE_CONNECTION', 'database')),
+        'queue' => env('WHATSAPP_NOTIFICATION_QUEUE', 'whatsapp-notifications'),
+    ],
+    'sending' => [
+        'delay_min_seconds' => (int) env('WHATSAPP_NOTIFICATION_DELAY_MIN', 30),
+        'delay_max_seconds' => (int) env('WHATSAPP_NOTIFICATION_DELAY_MAX', 60),
+        'max_attempts' => (int) env('WHATSAPP_NOTIFICATION_MAX_ATTEMPTS', 2),
+        'lock_ttl_seconds' => (int) env('WHATSAPP_NOTIFICATION_LOCK_TTL', 180),
+        'stale_processing_minutes' => (int) env('WHATSAPP_NOTIFICATION_STALE_PROCESSING_MINUTES', 10),
+    ],
+    'table_name' => env('WHATSAPP_NOTIFICATION_TABLE', 'whatsapp_notification_logs'),
 ];
+```
+
+Recommended `.env` example:
+
+```env
+WHATSAPP_NOTIFICATION_ENABLED=true
+WHATSAPP_NOTIFICATION_GATEWAY_URL=http://127.0.0.1:5001
+WHATSAPP_NOTIFICATION_PUBLIC_GATEWAY_URL=http://127.0.0.1:5001
+WHATSAPP_NOTIFICATION_GATEWAY_TOKEN=
+WHATSAPP_NOTIFICATION_TIMEOUT=30
+WHATSAPP_NOTIFICATION_COUNTRY_CODE=62
+WHATSAPP_NOTIFICATION_CHECK_STATUS=false
+
+WHATSAPP_NOTIFICATION_QUEUE_CONNECTION=database
+WHATSAPP_NOTIFICATION_QUEUE=whatsapp-notifications
+
+WHATSAPP_NOTIFICATION_DELAY_MIN=30
+WHATSAPP_NOTIFICATION_DELAY_MAX=60
+WHATSAPP_NOTIFICATION_MAX_ATTEMPTS=2
+WHATSAPP_NOTIFICATION_LOCK_TTL=180
+WHATSAPP_NOTIFICATION_STALE_PROCESSING_MINUTES=10
 ```
 
 ## Usage
 
+### 1. Route the recipient
+
+Your notifiable model can define a WhatsApp routing method:
+
 ```php
-$variable = new VendorName\Skeleton();
-echo $variable->echoPhrase('Hello, VendorName!');
+use Illuminate\Notifications\Notifiable;
+
+class User
+{
+    use Notifiable;
+
+    public function routeNotificationForWhatsapp(): string
+    {
+        return $this->phone_number;
+    }
+}
 ```
 
+### 2. Create a notification
+
+```php
+use Illuminate\Notifications\Notification;
+use Rezadaulay\FilamentWhatsappNotification\Messages\WhatsappMessage;
+
+class OrderPaidWhatsappNotification extends Notification
+{
+    public function via(object $notifiable): array
+    {
+        return ['whatsapp'];
+    }
+
+    public function toWhatsapp(object $notifiable): WhatsappMessage
+    {
+        return WhatsappMessage::make()
+            ->content("Your order #{$this->order->number} has been paid.")
+            ->payload([
+                'order_id' => $this->order->id,
+                'type' => 'order-paid',
+            ]);
+    }
+}
+```
+
+### 3. Send the notification
+
+```php
+$user->notify(new OrderPaidWhatsappNotification($order));
+```
+
+### 4. Override destination or country code when needed
+
+```php
+public function toWhatsapp(object $notifiable): WhatsappMessage
+{
+    return WhatsappMessage::make()
+        ->to('081234567890')
+        ->countryCode('62')
+        ->content('Hello from WhatsApp')
+        ->deduplicationKey('order-123-paid');
+}
+```
+
+## Running the Queue
+
+This package relies on Laravel queues for actual delivery. Make sure a worker is running:
+
+```bash
+php artisan queue:work
+```
+
+If you want to process a dedicated queue:
+
+```bash
+php artisan queue:work --queue=whatsapp-notifications
+```
+
+Without a queue worker, notifications will be logged but not sent.
+
+## Filament Features
+
+After registering the plugin, you get:
+
+- a **WhatsApp Connection** page to inspect gateway status
+- QR access through a signed proxy route
+- actions to refresh status, restart the socket, reset the session, and log out
+- a log resource for outgoing notifications
+- a stats widget for operational visibility
+
+The connection page also supports:
+
+- direct test sending through the gateway
+- queue-based test messages through the package pipeline
+
+## Operational Notes
+
+- Messages are processed sequentially with a lock to reduce concurrent-send issues.
+- A random delay is applied between sends to avoid sending messages back to back too aggressively.
+- Failed sends can return to `pending` until the configured max attempts is reached.
+- Stale `processing` records are released automatically back to `pending`.
+- If `check_status_before_send` is enabled, the package verifies gateway connectivity before each send attempt.
+
+## Troubleshooting
+
+### Messages stay pending
+
+Check these first:
+
+- Laravel queue worker is running
+- queue connection is configured correctly
+- gateway URL is reachable from Laravel
+- `WHATSAPP_NOTIFICATION_ENABLED=true`
+
+### Gateway status fails in Filament
+
+Usually one of these is the cause:
+
+- the gateway server is offline
+- the gateway base URL is wrong
+- the gateway requires a bearer token and `WHATSAPP_NOTIFICATION_GATEWAY_TOKEN` is missing
+
+### QR does not load
+
+The package shows the QR through a signed proxy route:
+
+```text
+/filament-whatsapp-notification/qr-proxy
+```
+
+If the gateway itself is healthy but the QR is unavailable, the WhatsApp session may not have produced a QR yet, or it may already be connected.
+
+### Notifications fail repeatedly
+
+Inspect the log resource in Filament and confirm:
+
+- phone number format is valid
+- default country code is correct
+- the paired WhatsApp session is still connected
+- the external gateway can send to that number
+
 ## Testing
+
+Run the package test suite with:
 
 ```bash
 composer test
@@ -77,21 +334,8 @@ composer test
 
 ## Changelog
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Contributing
-
-Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](.github/SECURITY.md) on how to report security vulnerabilities.
-
-## Credits
-
-- [:author_name](https://github.com/:author_username)
-- [All Contributors](../../contributors)
+See [CHANGELOG.md](CHANGELOG.md) for recent changes.
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+This package is open-sourced under the [MIT license](LICENSE.md).
