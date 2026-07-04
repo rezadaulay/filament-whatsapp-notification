@@ -39,6 +39,8 @@ You can publish and run the migrations with:
 ```bash
 php artisan vendor:publish --tag=":package_slug-migrations"
 php artisan migrate
+php artisan filament:assets
+php artisan optimize:clear
 ```
 
 You can publish the config file with:

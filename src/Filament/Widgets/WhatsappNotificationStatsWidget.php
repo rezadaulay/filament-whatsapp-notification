@@ -16,12 +16,14 @@ class WhatsappNotificationStatsWidget extends StatsOverviewWidget
         $cooldownUntil = $query->clone()->whereNotNull('next_process_not_before')->max('next_process_not_before');
 
         return [
-            Stat::make('Pending', (string) $query->clone()->where('status', WhatsappNotificationStatus::Pending->value)->count()),
-            Stat::make('Processing', (string) $query->clone()->where('status', WhatsappNotificationStatus::Processing->value)->count()),
-            Stat::make('Sent Today', (string) $query->clone()->whereDate('sent_at', $today)->count()),
-            Stat::make('Failed Today', (string) $query->clone()->whereDate('failed_at', $today)->count()),
-            Stat::make('Failed Total', (string) $query->clone()->where('status', WhatsappNotificationStatus::Failed->value)->count())
-                ->description($cooldownUntil ? 'Cooldown until ' . $cooldownUntil : 'No active cooldown'),
+            Stat::make(__('filament-whatsapp-notification::filament-whatsapp-notification.stats.pending'), (string) $query->clone()->where('status', WhatsappNotificationStatus::Pending->value)->count()),
+            Stat::make(__('filament-whatsapp-notification::filament-whatsapp-notification.stats.processing'), (string) $query->clone()->where('status', WhatsappNotificationStatus::Processing->value)->count()),
+            Stat::make(__('filament-whatsapp-notification::filament-whatsapp-notification.stats.sent_today'), (string) $query->clone()->whereDate('sent_at', $today)->count()),
+            Stat::make(__('filament-whatsapp-notification::filament-whatsapp-notification.stats.failed_today'), (string) $query->clone()->whereDate('failed_at', $today)->count()),
+            Stat::make(__('filament-whatsapp-notification::filament-whatsapp-notification.stats.failed_total'), (string) $query->clone()->where('status', WhatsappNotificationStatus::Failed->value)->count())
+                ->description($cooldownUntil
+                    ? __('filament-whatsapp-notification::filament-whatsapp-notification.stats.cooldown_until', ['time' => $cooldownUntil])
+                    : __('filament-whatsapp-notification::filament-whatsapp-notification.stats.no_active_cooldown')),
         ];
     }
 }

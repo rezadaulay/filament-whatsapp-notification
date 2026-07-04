@@ -15,6 +15,7 @@ use Rezadaulay\FilamentWhatsappNotification\Enums\WhatsappNotificationStatus;
 use Rezadaulay\FilamentWhatsappNotification\Models\WhatsappNotificationLog;
 use Rezadaulay\FilamentWhatsappNotification\Services\WhatsappGatewayClient;
 use Rezadaulay\FilamentWhatsappNotification\Services\WhatsappNotificationQueue;
+use Illuminate\Support\Facades\URL;
 
 class WhatsappConnectionPage extends Page implements HasForms
 {
@@ -54,6 +55,14 @@ class WhatsappConnectionPage extends Page implements HasForms
     public function getTitle(): string
     {
         return __('filament-whatsapp-notification::filament-whatsapp-notification.connection.title');
+    }
+
+    public function getQrProxyUrl(): string
+    {
+        return URL::temporarySignedRoute(
+            'filament-whatsapp-notification.qr-proxy',
+            now()->addMinutes(10),
+        );
     }
 
     public function form(Schema $schema): Schema
@@ -104,6 +113,7 @@ class WhatsappConnectionPage extends Page implements HasForms
             result: $client->restartSocket(),
             successMessage: __('filament-whatsapp-notification::filament-whatsapp-notification.connection.messages.restart_socket_success'),
             failedMessage: __('filament-whatsapp-notification::filament-whatsapp-notification.connection.messages.restart_socket_failed'),
+            modalId: 'fwn-danger-reconnect',
         );
     }
 
@@ -115,6 +125,7 @@ class WhatsappConnectionPage extends Page implements HasForms
             result: $client->restart(),
             successMessage: __('filament-whatsapp-notification::filament-whatsapp-notification.connection.messages.reset_session_success'),
             failedMessage: __('filament-whatsapp-notification::filament-whatsapp-notification.connection.messages.reset_session_failed'),
+            modalId: 'fwn-danger-reset',
         );
     }
 
@@ -126,6 +137,7 @@ class WhatsappConnectionPage extends Page implements HasForms
             result: $client->logout(),
             successMessage: __('filament-whatsapp-notification::filament-whatsapp-notification.connection.messages.logout_success'),
             failedMessage: __('filament-whatsapp-notification::filament-whatsapp-notification.connection.messages.logout_failed'),
+            modalId: 'fwn-danger-logout',
         );
     }
 
@@ -189,31 +201,15 @@ class WhatsappConnectionPage extends Page implements HasForms
             Action::make('openQr')
                 ->label(__('filament-whatsapp-notification::filament-whatsapp-notification.connection.actions.open_qr'))
                 ->icon('heroicon-o-qr-code')
-                ->url(fn (WhatsappGatewayClient $client): string => $client->qrUrl())
-                ->openUrlInNewTab(),
-            Action::make('restartSocket')
-                ->label(__('filament-whatsapp-notification::filament-whatsapp-notification.connection.actions.restart_socket'))
-                ->icon('heroicon-o-arrow-path-rounded-square')
-                ->requiresConfirmation()
-                ->modalHeading(__('filament-whatsapp-notification::filament-whatsapp-notification.connection.confirmations.restart_socket_heading'))
-                ->modalDescription(__('filament-whatsapp-notification::filament-whatsapp-notification.connection.confirmations.restart_socket_description'))
-                ->action(fn () => $this->restartSocket()),
-            Action::make('restart')
-                ->label(__('filament-whatsapp-notification::filament-whatsapp-notification.connection.actions.reset_session'))
-                ->icon('heroicon-o-exclamation-triangle')
-                ->color('danger')
-                ->requiresConfirmation()
-                ->modalHeading(__('filament-whatsapp-notification::filament-whatsapp-notification.connection.confirmations.reset_session_heading'))
-                ->modalDescription(__('filament-whatsapp-notification::filament-whatsapp-notification.connection.confirmations.reset_session_description'))
-                ->action(fn () => $this->restart()),
-            Action::make('logout')
-                ->label(__('filament-whatsapp-notification::filament-whatsapp-notification.connection.actions.logout'))
-                ->icon('heroicon-o-arrow-left-on-rectangle')
-                ->color('danger')
-                ->requiresConfirmation()
-                ->modalHeading(__('filament-whatsapp-notification::filament-whatsapp-notification.connection.confirmations.logout_heading'))
-                ->modalDescription(__('filament-whatsapp-notification::filament-whatsapp-notification.connection.confirmations.logout_description'))
-                ->action(fn () => $this->logout()),
+                ->color(fn (): string => $this->getNormalizedStatusKey() === 'connected' ? 'gray' : 'primary')
+                ->outlined(fn (): bool => $this->getNormalizedStatusKey() === 'connected')
+                ->modalHeading(__('filament-whatsapp-notification::filament-whatsapp-notification.connection.qr.modal_heading'))
+                ->modalWidth('xl')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel(__('filament-whatsapp-notification::filament-whatsapp-notification.connection.qr.close'))
+                ->modalContent(fn () => view('filament-whatsapp-notification::filament.pages.partials.qr-modal', [
+                    'qrProxyUrl' => $this->getQrProxyUrl(),
+                ])),
         ];
     }
 
@@ -229,6 +225,7 @@ class WhatsappConnectionPage extends Page implements HasForms
         mixed $result,
         string $successMessage,
         string $failedMessage,
+        ?string $modalId = null,
     ): void {
         if ($result->successful) {
             Notification::make()
@@ -244,11 +241,15 @@ class WhatsappConnectionPage extends Page implements HasForms
         }
 
         $this->refreshStatus();
+
+        if (filled($modalId)) {
+            $this->dispatch('close-modal', id: $modalId);
+        }
     }
 
     public function getStatusBadgeColor(): string
     {
-        return match (strtolower((string) data_get($this->status, 'status', 'unknown'))) {
+        return match ($this->getNormalizedStatusKey()) {
             'connected' => 'success',
             'connecting' => 'warning',
             'disconnected' => 'danger',
@@ -258,10 +259,79 @@ class WhatsappConnectionPage extends Page implements HasForms
 
     public function getNormalizedStatus(): string
     {
-        return (string) data_get(
-            $this->status,
-            'status',
-            __('filament-whatsapp-notification::filament-whatsapp-notification.connection.status.unknown')
-        );
+        return match ($this->getNormalizedStatusKey()) {
+            'connected' => __('filament-whatsapp-notification::filament-whatsapp-notification.connection.status.connected'),
+            'connecting' => __('filament-whatsapp-notification::filament-whatsapp-notification.connection.status.connecting'),
+            'disconnected' => __('filament-whatsapp-notification::filament-whatsapp-notification.connection.status.disconnected'),
+            default => __('filament-whatsapp-notification::filament-whatsapp-notification.connection.status.unknown'),
+        };
+    }
+
+    public function getNormalizedStatusKey(): string
+    {
+        return strtolower((string) data_get($this->status, 'status', 'unknown'));
+    }
+
+    public function getAccountId(): ?string
+    {
+        return data_get($this->status, 'user.id');
+    }
+
+    public function getStatusHeadline(): string
+    {
+        if ($this->statusError !== null) {
+            return __('filament-whatsapp-notification::filament-whatsapp-notification.connection.summary.error_title');
+        }
+
+        return match ($this->getNormalizedStatusKey()) {
+            'connected' => __('filament-whatsapp-notification::filament-whatsapp-notification.connection.summary.connected_title'),
+            'disconnected' => __('filament-whatsapp-notification::filament-whatsapp-notification.connection.summary.disconnected_title'),
+            default => __('filament-whatsapp-notification::filament-whatsapp-notification.connection.summary.error_title'),
+        };
+    }
+
+    public function getStatusHelperMessage(): string
+    {
+        if ($this->statusError !== null) {
+            return __('filament-whatsapp-notification::filament-whatsapp-notification.connection.summary.error_helper');
+        }
+
+        return match ($this->getNormalizedStatusKey()) {
+            'connected' => __('filament-whatsapp-notification::filament-whatsapp-notification.connection.summary.connected_helper'),
+            'disconnected' => __('filament-whatsapp-notification::filament-whatsapp-notification.connection.summary.disconnected_helper'),
+            default => __('filament-whatsapp-notification::filament-whatsapp-notification.connection.summary.error_helper'),
+        };
+    }
+
+    public function hasDangerActions(): bool
+    {
+        return $this->canReconnectSocket() || $this->canResetSession() || $this->canLogoutSession();
+    }
+
+    public function canReconnectSocket(): bool
+    {
+        if ($this->statusError !== null) {
+            return false;
+        }
+
+        return in_array($this->getNormalizedStatusKey(), ['connected', 'connecting', 'disconnected'], true);
+    }
+
+    public function canResetSession(): bool
+    {
+        if ($this->statusError !== null) {
+            return false;
+        }
+
+        return in_array($this->getNormalizedStatusKey(), ['connecting', 'disconnected'], true);
+    }
+
+    public function canLogoutSession(): bool
+    {
+        if ($this->statusError !== null) {
+            return false;
+        }
+
+        return $this->getNormalizedStatusKey() === 'connected';
     }
 }

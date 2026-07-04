@@ -56,6 +56,11 @@ class WhatsappGatewayClient
         return rtrim((string) config('filament-whatsapp-notification.gateway.public_url', $this->baseUrl()), '/') . '/qr';
     }
 
+    public function qrPage(): WhatsappGatewayResult
+    {
+        return $this->sendRequest('get', '/qr');
+    }
+
     protected function request(): PendingRequest
     {
         $request = $this->http
@@ -97,7 +102,9 @@ class WhatsappGatewayClient
             return new WhatsappGatewayResult(
                 successful: $successful,
                 httpStatus: $response->status(),
-                body: $body,
+                body: is_array($body)
+                    ? $body
+                    : $this->withResponseMeta($body, $response->header('Content-Type')),
                 error: $successful ? null : $this->resolveError($response->body(), $body),
             );
         } catch (ConnectionException $exception) {
@@ -131,5 +138,19 @@ class WhatsappGatewayClient
         }
 
         return $rawBody !== '' ? $rawBody : 'Gateway request failed.';
+    }
+
+    protected function withResponseMeta(array|string|null $body, ?string $contentType): array|string|null
+    {
+        if (! is_string($body)) {
+            return $body;
+        }
+
+        return [
+            '__meta' => [
+                'content_type' => $contentType,
+            ],
+            'content' => $body,
+        ];
     }
 }

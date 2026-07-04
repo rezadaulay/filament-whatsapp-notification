@@ -7,6 +7,7 @@ use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Livewire\Features\SupportTesting\Testable;
+use Illuminate\Support\Facades\Route;
 use Rezadaulay\FilamentWhatsappNotification\Commands\FilamentWhatsappNotificationCommand;
 use Rezadaulay\FilamentWhatsappNotification\Channels\WhatsappChannel;
 use Rezadaulay\FilamentWhatsappNotification\Testing\TestsFilamentWhatsappNotification;
@@ -41,6 +42,7 @@ class FilamentWhatsappNotificationServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
+        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
         Testable::mixin(new TestsFilamentWhatsappNotification);
     }
 

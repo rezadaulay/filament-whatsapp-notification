@@ -4,6 +4,7 @@ namespace Rezadaulay\FilamentWhatsappNotification;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
+use Filament\Support\Assets\Css;
 use Rezadaulay\FilamentWhatsappNotification\Filament\Pages\WhatsappConnectionPage;
 use Rezadaulay\FilamentWhatsappNotification\Filament\Resources\WhatsappNotificationLogResource;
 use Rezadaulay\FilamentWhatsappNotification\Filament\Widgets\WhatsappNotificationStatsWidget;
@@ -44,6 +45,13 @@ class FilamentWhatsappNotificationPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
+        $panel->assets([
+            Css::make(
+                'filament-whatsapp-notification',
+                __DIR__ . '/../resources/css/filament-whatsapp-notification.css',
+            ),
+        ]);
+
         if ($this->hasResource) {
             $panel->resources([
                 WhatsappNotificationLogResource::class,

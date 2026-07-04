@@ -45,7 +45,7 @@ class WhatsappNotificationLogResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Message')
+            Section::make(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.headings.message'))
                 ->schema([
                     TextInput::make('recipient')->disabled(),
                     TextInput::make('country_code')->disabled(),
@@ -58,14 +58,14 @@ class WhatsappNotificationLogResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Message')
+            Section::make(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.headings.message'))
                 ->schema([
                     TextEntry::make('recipient'),
                     TextEntry::make('country_code'),
                     TextEntry::make('message')->columnSpanFull(),
                     KeyValueEntry::make('payload')->columnSpanFull(),
                 ])->columns(2),
-            Section::make('Delivery')
+            Section::make(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.headings.delivery'))
                 ->schema([
                     TextEntry::make('status')->badge(),
                     TextEntry::make('attempts')->formatStateUsing(fn (WhatsappNotificationLog $record): string => "{$record->attempts} / {$record->max_attempts}"),
@@ -73,7 +73,7 @@ class WhatsappNotificationLogResource extends Resource
                     KeyValueEntry::make('gateway_response')->columnSpanFull(),
                     TextEntry::make('last_error')->columnSpanFull(),
                 ])->columns(3),
-            Section::make('Metadata')
+            Section::make(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.headings.metadata'))
                 ->schema([
                     TextEntry::make('notification_class'),
                     TextEntry::make('notifiable_type'),
@@ -114,9 +114,9 @@ class WhatsappNotificationLogResource extends Resource
                 TextColumn::make('recipient')->searchable(),
                 TextColumn::make('message')->limit(100)->wrap(),
                 TextColumn::make('attempts')
-                    ->label('Attempts')
+                    ->label(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.columns.attempts'))
                     ->formatStateUsing(fn (WhatsappNotificationLog $record): string => "{$record->attempts} / {$record->max_attempts}"),
-                TextColumn::make('http_status')->label('HTTP'),
+                TextColumn::make('http_status')->label(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.columns.http_status')),
                 TextColumn::make('created_at')->dateTime()->sortable(),
                 TextColumn::make('last_attempt_finished_at')->dateTime()->sortable(),
                 TextColumn::make('sent_at')->dateTime()->sortable(),
@@ -125,39 +125,46 @@ class WhatsappNotificationLogResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('status')->options(collect(WhatsappNotificationStatus::cases())->mapWithKeys(
-                    fn (WhatsappNotificationStatus $status): array => [$status->value => ucfirst($status->value)]
+                    fn (WhatsappNotificationStatus $status): array => [$status->value => __("filament-whatsapp-notification::filament-whatsapp-notification.logs.status.{$status->value}")]
                 )->all()),
                 Filter::make('failed_only')
+                    ->label(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.filters.failed_only'))
                     ->query(fn (Builder $query): Builder => $query->where('status', WhatsappNotificationStatus::Failed->value)),
                 Filter::make('pending_only')
+                    ->label(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.filters.pending_only'))
                     ->query(fn (Builder $query): Builder => $query->where('status', WhatsappNotificationStatus::Pending->value)),
                 Filter::make('sent_only')
+                    ->label(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.filters.sent_only'))
                     ->query(fn (Builder $query): Builder => $query->where('status', WhatsappNotificationStatus::Sent->value)),
             ])
             ->recordActions([
                 ViewAction::make(),
                 Action::make('retry')
+                    ->label(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.actions.retry'))
                     ->visible(fn (WhatsappNotificationLog $record): bool => $record->canRetry())
                     ->action(function (WhatsappNotificationLog $record, WhatsappNotificationProcessor $processor): void {
                         $processor->retry($record);
-                        Notification::make()->title('Message queued for retry.')->success()->send();
+                        Notification::make()->title(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.messages.retry_queued'))->success()->send();
                     }),
                 Action::make('cancel')
+                    ->label(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.actions.cancel'))
                     ->visible(fn (WhatsappNotificationLog $record): bool => $record->canCancel())
                     ->requiresConfirmation()
                     ->color('gray')
                     ->action(function (WhatsappNotificationLog $record, WhatsappNotificationProcessor $processor): void {
                         $processor->cancel($record);
-                        Notification::make()->title('Message cancelled.')->success()->send();
+                        Notification::make()->title(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.messages.cancelled'))->success()->send();
                     }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     BulkAction::make('retry_selected')
+                        ->label(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.actions.retry_selected'))
                         ->action(function (Collection $records, WhatsappNotificationProcessor $processor): void {
                             $records->each(fn (WhatsappNotificationLog $record) => $processor->retry($record));
                         }),
                     BulkAction::make('cancel_selected')
+                        ->label(__('filament-whatsapp-notification::filament-whatsapp-notification.logs.actions.cancel_selected'))
                         ->color('gray')
                         ->requiresConfirmation()
                         ->action(function (Collection $records, WhatsappNotificationProcessor $processor): void {
