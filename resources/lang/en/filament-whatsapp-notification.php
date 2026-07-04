@@ -67,8 +67,6 @@ return [
         ],
         'fields' => [
             'gateway_base_url' => 'WhatsApp Server URL',
-            'gateway_public_url' => 'QR Login URL',
-            'qr_url' => 'QR Login Page',
             'last_checked_at' => 'Last Checked At',
             'status' => 'Technical Status',
             'account_id' => 'Connected WhatsApp Number',

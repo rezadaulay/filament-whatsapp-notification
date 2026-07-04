@@ -84,7 +84,7 @@ php artisan optimize:clear
 Point this package to a running HTTP gateway. The default configuration expects:
 
 ```text
-http://127.0.0.1:5001
+http://127.0.0.1:5000
 ```
 
 If you are using `rezadaulay/expressjs-baileys`, make sure the gateway is running, paired with WhatsApp, and reachable from your Laravel app.
@@ -140,9 +140,7 @@ Published config: `config/filament-whatsapp-notification.php`
 return [
     'enabled' => env('WHATSAPP_NOTIFICATION_ENABLED', true),
     'gateway' => [
-        'base_url' => env('WHATSAPP_NOTIFICATION_GATEWAY_URL', 'http://127.0.0.1:5001'),
-        'public_url' => env('WHATSAPP_NOTIFICATION_PUBLIC_GATEWAY_URL', env('WHATSAPP_NOTIFICATION_GATEWAY_URL', 'http://127.0.0.1:5001')),
-        'token' => env('WHATSAPP_NOTIFICATION_GATEWAY_TOKEN'),
+        'base_url' => env('WHATSAPP_NOTIFICATION_GATEWAY_URL', 'http://127.0.0.1:5000'),
         'timeout' => (int) env('WHATSAPP_NOTIFICATION_TIMEOUT', 30),
         'country_code' => env('WHATSAPP_NOTIFICATION_COUNTRY_CODE', '62'),
         'check_status_before_send' => env('WHATSAPP_NOTIFICATION_CHECK_STATUS', false),
@@ -166,9 +164,7 @@ Recommended `.env` example:
 
 ```env
 WHATSAPP_NOTIFICATION_ENABLED=true
-WHATSAPP_NOTIFICATION_GATEWAY_URL=http://127.0.0.1:5001
-WHATSAPP_NOTIFICATION_PUBLIC_GATEWAY_URL=http://127.0.0.1:5001
-WHATSAPP_NOTIFICATION_GATEWAY_TOKEN=
+WHATSAPP_NOTIFICATION_GATEWAY_URL=http://127.0.0.1:5000
 WHATSAPP_NOTIFICATION_TIMEOUT=30
 WHATSAPP_NOTIFICATION_COUNTRY_CODE=62
 WHATSAPP_NOTIFICATION_CHECK_STATUS=false
@@ -303,7 +299,6 @@ Usually one of these is the cause:
 
 - the gateway server is offline
 - the gateway base URL is wrong
-- the gateway requires a bearer token and `WHATSAPP_NOTIFICATION_GATEWAY_TOKEN` is missing
 
 ### QR does not load
 

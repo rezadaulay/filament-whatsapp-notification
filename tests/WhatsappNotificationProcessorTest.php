@@ -10,7 +10,7 @@ it('marks a log as sent when the gateway returns success', function () {
     config()->set('filament-whatsapp-notification.sending.delay_max_seconds', 1);
 
     Http::fake([
-        'http://127.0.0.1:5001/send-message' => Http::response(['success' => true], 200),
+        'http://127.0.0.1:5000/send-message' => Http::response(['success' => true], 200),
     ]);
 
     $log = WhatsappNotificationLog::query()->create([
@@ -37,7 +37,7 @@ it('returns a failed log to pending when attempts remain', function () {
     config()->set('filament-whatsapp-notification.sending.delay_max_seconds', 1);
 
     Http::fake([
-        'http://127.0.0.1:5001/send-message' => Http::response(['success' => false, 'message' => 'Gateway error'], 500),
+        'http://127.0.0.1:5000/send-message' => Http::response(['success' => false, 'message' => 'Gateway error'], 500),
     ]);
 
     $log = WhatsappNotificationLog::query()->create([
