@@ -1,6 +1,6 @@
 <?php
 
-namespace VendorName\Skeleton;
+namespace Rezadaulay\FilamentWhatsappNotification;
 
 use Filament\Support\Assets\AlpineComponent;
 use Filament\Support\Assets\Asset;
@@ -8,19 +8,18 @@ use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentIcon;
-use Illuminate\Filesystem\Filesystem;
 use Livewire\Features\SupportTesting\Testable;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use VendorName\Skeleton\Commands\SkeletonCommand;
-use VendorName\Skeleton\Testing\TestsSkeleton;
+use Rezadaulay\FilamentWhatsappNotification\Commands\FilamentWhatsappNotificationCommand;
+use Rezadaulay\FilamentWhatsappNotification\Testing\TestsFilamentWhatsappNotification;
 
-class SkeletonServiceProvider extends PackageServiceProvider
+class FilamentWhatsappNotificationServiceProvider extends PackageServiceProvider
 {
-    public static string $name = 'skeleton';
+    public static string $name = 'filament-whatsapp-notification';
 
-    public static string $viewNamespace = 'skeleton';
+    public static string $viewNamespace = 'filament-whatsapp-notification';
 
     public function configurePackage(Package $package): void
     {
@@ -36,7 +35,7 @@ class SkeletonServiceProvider extends PackageServiceProvider
                     ->publishConfigFile()
                     ->publishMigrations()
                     ->askToRunMigrations()
-                    ->askToStarRepoOnGitHub(':vendor_slug/:package_slug');
+                    ->askToStarRepoOnGitHub('rezadaulay/filament-whatsapp-notification');
             });
 
         $configFileName = $package->shortName();
@@ -76,22 +75,13 @@ class SkeletonServiceProvider extends PackageServiceProvider
         // Icon Registration
         FilamentIcon::register($this->getIcons());
 
-        // Handle Stubs
-        if (app()->runningInConsole()) {
-            foreach (app(Filesystem::class)->files(__DIR__ . '/../stubs/') as $file) {
-                $this->publishes([
-                    $file->getRealPath() => base_path("stubs/skeleton/{$file->getFilename()}"),
-                ], 'skeleton-stubs');
-            }
-        }
-
         // Testing
-        Testable::mixin(new TestsSkeleton);
+        Testable::mixin(new TestsFilamentWhatsappNotification);
     }
 
     protected function getAssetPackageName(): ?string
     {
-        return ':vendor_slug/:package_slug';
+        return 'rezadaulay/filament-whatsapp-notification';
     }
 
     /**
@@ -100,9 +90,9 @@ class SkeletonServiceProvider extends PackageServiceProvider
     protected function getAssets(): array
     {
         return [
-            // AlpineComponent::make('skeleton', __DIR__ . '/../resources/dist/components/skeleton.js'),
-            // Css::make('skeleton-styles', __DIR__ . '/../resources/dist/skeleton.css'),
-            // Js::make('skeleton-scripts', __DIR__ . '/../resources/dist/skeleton.js'),
+            // AlpineComponent::make('filament-whatsapp-notification', __DIR__ . '/../resources/dist/components/filament-whatsapp-notification.js'),
+            // Css::make('filament-whatsapp-notification-styles', __DIR__ . '/../resources/dist/filament-whatsapp-notification.css'),
+            // Js::make('filament-whatsapp-notification-scripts', __DIR__ . '/../resources/dist/filament-whatsapp-notification.js'),
         ];
     }
 
@@ -112,7 +102,7 @@ class SkeletonServiceProvider extends PackageServiceProvider
     protected function getCommands(): array
     {
         return [
-            SkeletonCommand::class,
+            FilamentWhatsappNotificationCommand::class,
         ];
     }
 
@@ -146,7 +136,7 @@ class SkeletonServiceProvider extends PackageServiceProvider
     protected function getMigrations(): array
     {
         return [
-            'create_skeleton_table',
+            'create_filament_whatsapp_notifications_table',
         ];
     }
 }
