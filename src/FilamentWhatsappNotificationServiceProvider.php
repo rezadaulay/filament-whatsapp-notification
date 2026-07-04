@@ -3,14 +3,13 @@
 namespace Rezadaulay\FilamentWhatsappNotification;
 
 use Illuminate\Notifications\ChannelManager;
+use Livewire\Features\SupportTesting\Testable;
+use Rezadaulay\FilamentWhatsappNotification\Channels\WhatsappChannel;
+use Rezadaulay\FilamentWhatsappNotification\Commands\FilamentWhatsappNotificationCommand;
+use Rezadaulay\FilamentWhatsappNotification\Testing\TestsFilamentWhatsappNotification;
+use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Spatie\LaravelPackageTools\Commands\InstallCommand;
-use Livewire\Features\SupportTesting\Testable;
-use Illuminate\Support\Facades\Route;
-use Rezadaulay\FilamentWhatsappNotification\Commands\FilamentWhatsappNotificationCommand;
-use Rezadaulay\FilamentWhatsappNotification\Channels\WhatsappChannel;
-use Rezadaulay\FilamentWhatsappNotification\Testing\TestsFilamentWhatsappNotification;
 
 class FilamentWhatsappNotificationServiceProvider extends PackageServiceProvider
 {
@@ -55,5 +54,4 @@ class FilamentWhatsappNotificationServiceProvider extends PackageServiceProvider
             FilamentWhatsappNotificationCommand::class,
         ];
     }
-
 }

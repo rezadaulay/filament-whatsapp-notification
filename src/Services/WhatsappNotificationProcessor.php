@@ -3,7 +3,6 @@
 namespace Rezadaulay\FilamentWhatsappNotification\Services;
 
 use Carbon\Carbon;
-use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Support\Facades\Cache;
 use Rezadaulay\FilamentWhatsappNotification\DataTransferObjects\WhatsappGatewayResult;
 use Rezadaulay\FilamentWhatsappNotification\Enums\WhatsappNotificationStatus;
@@ -190,7 +189,7 @@ class WhatsappNotificationProcessor
         return random_int($min, $max);
     }
 
-    protected function normalizeBody(WhatsappGatewayResult $result): array|string|null
+    protected function normalizeBody(WhatsappGatewayResult $result): array | string | null
     {
         return $result->body;
     }

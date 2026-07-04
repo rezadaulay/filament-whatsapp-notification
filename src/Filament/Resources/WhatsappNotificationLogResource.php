@@ -30,9 +30,9 @@ class WhatsappNotificationLogResource extends Resource
 {
     protected static ?string $model = WhatsappNotificationLog::class;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
-    public static function getNavigationGroup(): string|\UnitEnum|null
+    public static function getNavigationGroup(): string | \UnitEnum | null
     {
         return __('filament-whatsapp-notification::filament-whatsapp-notification.navigation.group');
     }

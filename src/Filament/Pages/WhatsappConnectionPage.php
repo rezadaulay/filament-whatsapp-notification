@@ -11,17 +11,17 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\URL;
 use Rezadaulay\FilamentWhatsappNotification\Enums\WhatsappNotificationStatus;
 use Rezadaulay\FilamentWhatsappNotification\Models\WhatsappNotificationLog;
 use Rezadaulay\FilamentWhatsappNotification\Services\WhatsappGatewayClient;
 use Rezadaulay\FilamentWhatsappNotification\Services\WhatsappNotificationQueue;
-use Illuminate\Support\Facades\URL;
 
 class WhatsappConnectionPage extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-signal';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-signal';
 
     protected static ?string $slug = 'whatsapp-connection';
 

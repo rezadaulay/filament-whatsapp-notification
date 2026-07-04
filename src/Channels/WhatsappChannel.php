@@ -3,9 +3,9 @@
 namespace Rezadaulay\FilamentWhatsappNotification\Channels;
 
 use Illuminate\Notifications\Notification;
+use Rezadaulay\FilamentWhatsappNotification\Enums\WhatsappNotificationStatus;
 use Rezadaulay\FilamentWhatsappNotification\Messages\WhatsappMessage;
 use Rezadaulay\FilamentWhatsappNotification\Models\WhatsappNotificationLog;
-use Rezadaulay\FilamentWhatsappNotification\Enums\WhatsappNotificationStatus;
 use Rezadaulay\FilamentWhatsappNotification\Services\WhatsappNotificationQueue;
 
 class WhatsappChannel

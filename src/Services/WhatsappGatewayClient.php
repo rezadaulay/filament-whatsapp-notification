@@ -126,12 +126,12 @@ class WhatsappGatewayClient
         }
     }
 
-    protected function decodeBody(string $rawBody, mixed $json): array|string|null
+    protected function decodeBody(string $rawBody, mixed $json): array | string | null
     {
         return is_array($json) ? $json : ($rawBody !== '' ? $rawBody : null);
     }
 
-    protected function resolveError(string $rawBody, array|string|null $body): string
+    protected function resolveError(string $rawBody, array | string | null $body): string
     {
         if (is_array($body)) {
             return (string) (data_get($body, 'message') ?? data_get($body, 'error') ?? 'Gateway request failed.');
@@ -140,7 +140,7 @@ class WhatsappGatewayClient
         return $rawBody !== '' ? $rawBody : 'Gateway request failed.';
     }
 
-    protected function withResponseMeta(array|string|null $body, ?string $contentType): array|string|null
+    protected function withResponseMeta(array | string | null $body, ?string $contentType): array | string | null
     {
         if (! is_string($body)) {
             return $body;
